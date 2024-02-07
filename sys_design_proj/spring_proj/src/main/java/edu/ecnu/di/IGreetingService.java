@@ -1,5 +1,5 @@
 package edu.ecnu.di;
 
-public interface GreetingService {
+public interface IGreetingService {
 	void greet();
 }

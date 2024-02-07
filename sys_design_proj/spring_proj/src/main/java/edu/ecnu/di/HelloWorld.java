@@ -1,6 +1,6 @@
 package edu.ecnu.di;
 
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.*;
 
 @Component
 public class HelloWorld {	
