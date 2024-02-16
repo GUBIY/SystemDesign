@@ -23,7 +23,7 @@ public class SpringApplication {
 
       appContext.di();
 
-      appContext.run();
+      appContext.run(primarySource);
 
 
     } catch (Throwable e) {
@@ -107,13 +107,16 @@ public class SpringApplication {
     }
   }
 
-  private void run() throws Exception {
-    for (String clazz : beanContainerMap.keySet()) {
-      if (sdk.CommandLineRunner.class.isAssignableFrom(Class.forName(clazz))) {
-        sdk.CommandLineRunner commandLineRunner = (sdk.CommandLineRunner) beanContainerMap.get(clazz);
-        commandLineRunner.run();
-      }
+  private void run(Class<?> primarySource) throws Exception {
+    String runClassname = primarySource.getCanonicalName();
+    if (!sdk.CommandLineRunner.class.isAssignableFrom(Class.forName(runClassname))) {
+      throw new Exception(String.format("unsupported runnable class:{0}", runClassname));
     }
+    if (!beanContainerMap.containsKey(runClassname)) {
+      throw new Exception(String.format("the runnable class doesn't exist in the bean:{0}", runClassname));
+    }
+    sdk.CommandLineRunner commandLineRunner = (sdk.CommandLineRunner) beanContainerMap.get(runClassname);
+    commandLineRunner.run();
   }
 
   private void di() throws IllegalAccessException, ClassNotFoundException {
