@@ -23,7 +23,7 @@ public class SpringApplication {
 
       appContext.di();
 
-      appContext.run(primarySource);
+      appContext.run();
 
 
     } catch (Throwable e) {
@@ -107,12 +107,13 @@ public class SpringApplication {
     }
   }
 
-  private void run(Class<?> primarySource) throws Exception {
-    if (sdk.CommandLineRunner.class.isAssignableFrom(primarySource)) {
-      sdk.CommandLineRunner commandLineRunner = (sdk.CommandLineRunner) beanContainerMap.get(primarySource.getCanonicalName());
-      commandLineRunner.run();
+  private void run() throws Exception {
+    for (String clazz : beanContainerMap.keySet()) {
+      if (sdk.CommandLineRunner.class.isAssignableFrom(Class.forName(clazz))) {
+        sdk.CommandLineRunner commandLineRunner = (sdk.CommandLineRunner) beanContainerMap.get(clazz);
+        commandLineRunner.run();
+      }
     }
-
   }
 
   private void di() throws IllegalAccessException, ClassNotFoundException {
