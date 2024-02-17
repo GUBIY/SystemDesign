@@ -50,31 +50,32 @@ public class SpringApplication {
         for (Annotation annotation : annotations) {
           if (annotation instanceof Before) {
             String value = ((Before) annotation).value();
+            int sepIdx = value.lastIndexOf(".");
+            String targetMethod = value.substring(sepIdx + 1);
             if (!classAopConfMap.containsKey(aopConfigClass.getCanonicalName())) {
               AopConf aopConf = new AopConf();
-              int sepIdx = value.lastIndexOf(".");
+
               aopConf.aspect = aopConfigClass.getCanonicalName();
               aopConf.targetClass = value.substring(0, sepIdx);
-              aopConf.targetMethod = value.substring(sepIdx + 1);
-              aopConf.beforeMethod = method;
+              aopConf.putBeforeMethod(targetMethod, method);
               classAopConfMap.put(aopConfigClass.getCanonicalName(), aopConf);
               continue;
             }
-            classAopConfMap.get(aopConfigClass.getCanonicalName()).beforeMethod = method;
+            classAopConfMap.get(aopConfigClass.getCanonicalName()).putBeforeMethod(targetMethod, method);
           }
           if (annotation instanceof After) {
             String value = ((After) annotation).value();
+            int sepIdx = value.lastIndexOf(".");
+            String targetMethod = value.substring(sepIdx + 1);
             if (!classAopConfMap.containsKey(aopConfigClass.getCanonicalName())) {
               AopConf aopConf = new AopConf();
-              int sepIdx = value.lastIndexOf(".");
               aopConf.aspect = aopConfigClass.getCanonicalName();
               aopConf.targetClass = value.substring(0, sepIdx);
-              aopConf.targetMethod = value.substring(sepIdx + 1);
-              aopConf.afterMethod = method;
+              aopConf.putAfterMethod(targetMethod, method);
               classAopConfMap.put(aopConfigClass.getCanonicalName(), aopConf);
               continue;
             }
-            classAopConfMap.get(aopConfigClass.getCanonicalName()).afterMethod = method;
+            classAopConfMap.get(aopConfigClass.getCanonicalName()).putAfterMethod(targetMethod, method);
           }
         }
       }
@@ -82,9 +83,7 @@ public class SpringApplication {
 
     for (String aopClass : classAopConfMap.keySet()) {
       AopConf aopConf = classAopConfMap.get(aopClass);
-      final Method beforeMethod = aopConf.beforeMethod;
-      final Method afterMethod = aopConf.afterMethod;
-      final String targetMethod = aopConf.targetMethod;
+      Map<String, AopMethodConf> methodConfMap = aopConf.methodConfMap;
       Object aspectObj = Class.forName(aopConf.aspect).newInstance();
       Class<?> beanClass = Class.forName(aopConf.targetClass);
       Object bean = beanContainerMap.get(beanClass.getCanonicalName());
@@ -93,12 +92,25 @@ public class SpringApplication {
           @Override
           public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
             String methodName = method.getName();
-            if (beforeMethod != null && methodName.equals(targetMethod)) {
-              beforeMethod.invoke(aspectObj, method, args);
+            for (String aopMethod : methodConfMap.keySet()) {
+              if (!methodName.equals(aopMethod)) {
+                continue;
+              }
+              if (methodConfMap.get(aopMethod).beforeMethod == null) {
+                continue;
+              }
+              methodConfMap.get(aopMethod).beforeMethod.invoke(aspectObj, method, args);
             }
+
             Object ref = method.invoke(bean, args);
-            if (afterMethod != null && methodName.equals(targetMethod)) {
-              afterMethod.invoke(aspectObj, method, args);
+            for (String aopMethod : methodConfMap.keySet()) {
+              if (!methodName.equals(aopMethod)) {
+                continue;
+              }
+              if (methodConfMap.get(aopMethod).afterMethod == null) {
+                continue;
+              }
+              methodConfMap.get(aopMethod).afterMethod.invoke(aspectObj, method, args);
             }
             return ref;
           }
@@ -172,8 +184,37 @@ public class SpringApplication {
   class AopConf {
     String aspect;
     String targetClass;
-    String targetMethod;
+    final Map<String, AopMethodConf> methodConfMap = new HashMap<String, AopMethodConf>();
+
+    public boolean hasMethodConf(String targetMethod) {
+      return methodConfMap.containsKey(targetMethod);
+    }
+
+    public void putBeforeMethod(String targetMethod, Method beforeMethod) {
+      if (hasMethodConf(targetMethod)) {
+        methodConfMap.get(targetMethod).beforeMethod = beforeMethod;
+        return;
+      }
+      methodConfMap.put(targetMethod, new AopMethodConf(beforeMethod, null));
+    }
+
+    public void putAfterMethod(String targetMethod, Method afterMethod) {
+      if (hasMethodConf(targetMethod)) {
+        methodConfMap.get(targetMethod).afterMethod = afterMethod;
+        return;
+      }
+      methodConfMap.put(targetMethod, new AopMethodConf(null, afterMethod));
+    }
+  }
+
+  class AopMethodConf {
     Method beforeMethod;
     Method afterMethod;
+
+    public AopMethodConf(Method beforeMethod, Method afterMethod) {
+      this.beforeMethod = beforeMethod;
+      this.afterMethod = afterMethod;
+    }
   }
+
 }

@@ -18,4 +18,10 @@ public class GreetingServiceAspect {
 	public void afterAdvice(Method method, Object... args) {
 		System.out.println("After method:" + method);
 	}
+
+
+	@Before(value = "edu.ecnu.di.IGreetingServiceImpl.farewell")
+	public void beforeFareWell(Method method, Object... args) {
+		System.out.println("Before farewell method:" + method);
+	}
 }

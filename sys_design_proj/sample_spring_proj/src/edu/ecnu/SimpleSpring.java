@@ -22,6 +22,7 @@ public class SimpleSpring implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
 		IGreetingService.greet();
+		IGreetingService.farewell();
 	}
 
 }

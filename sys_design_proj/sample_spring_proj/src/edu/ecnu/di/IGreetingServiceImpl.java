@@ -13,8 +13,13 @@ public class IGreetingServiceImpl implements IGreetingService {
 	public void greet() {
 		System.out.println("Simple greeting");
 	}
-	
-//	@PostConstruct
+
+	@Override
+	public void farewell() {
+		System.out.println("goodbye");
+	}
+
+	//	@PostConstruct
 	public void post() {
 		System.out.println("Greeting Service Impl is ready: " 
 	          + helloWorld.hello());
