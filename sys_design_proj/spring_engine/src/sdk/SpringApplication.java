@@ -31,7 +31,7 @@ public class SpringApplication {
     }
   }
 
-  private void aop() throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+  private void aop() throws Exception {
     //filter the AOP configure class
     ArrayList<Class> aopConfigClassList = new ArrayList<Class>();
     for (String beanClass : beanContainerMap.keySet()) {
@@ -84,7 +84,10 @@ public class SpringApplication {
     for (String aopClass : classAopConfMap.keySet()) {
       AopConf aopConf = classAopConfMap.get(aopClass);
       Map<String, AopMethodConf> methodConfMap = aopConf.methodConfMap;
-      Object aspectObj = Class.forName(aopConf.aspect).newInstance();
+      Object aspectObj = beanContainerMap.get(aopConf.aspect);
+      if (aspectObj == null) {
+        throw new Exception(String.format("the following aspect configuration class is not in the bean container:{0}", aopConf.aspect));
+      }
       Class<?> beanClass = Class.forName(aopConf.targetClass);
       Object bean = beanContainerMap.get(beanClass.getCanonicalName());
       Object proxyBean = Proxy.newProxyInstance(beanClass.getClassLoader(),
