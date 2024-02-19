@@ -52,30 +52,31 @@ public class SpringApplication {
             String value = ((Before) annotation).value();
             int sepIdx = value.lastIndexOf(".");
             String targetMethod = value.substring(sepIdx + 1);
-            if (!classAopConfMap.containsKey(aopConfigClass.getCanonicalName())) {
+            String targetClass = value.substring(0, sepIdx);
+            if (!classAopConfMap.containsKey(targetClass)) {
               AopConf aopConf = new AopConf();
-
               aopConf.aspect = aopConfigClass.getCanonicalName();
-              aopConf.targetClass = value.substring(0, sepIdx);
+              aopConf.targetClass = targetClass;
               aopConf.putBeforeMethod(targetMethod, method);
-              classAopConfMap.put(aopConfigClass.getCanonicalName(), aopConf);
+              classAopConfMap.put(targetClass, aopConf);
               continue;
             }
-            classAopConfMap.get(aopConfigClass.getCanonicalName()).putBeforeMethod(targetMethod, method);
+            classAopConfMap.get(targetClass).putBeforeMethod(targetMethod, method);
           }
           if (annotation instanceof After) {
             String value = ((After) annotation).value();
             int sepIdx = value.lastIndexOf(".");
             String targetMethod = value.substring(sepIdx + 1);
-            if (!classAopConfMap.containsKey(aopConfigClass.getCanonicalName())) {
+            String targetClass = value.substring(0, sepIdx);
+            if (!classAopConfMap.containsKey(targetClass)) {
               AopConf aopConf = new AopConf();
               aopConf.aspect = aopConfigClass.getCanonicalName();
-              aopConf.targetClass = value.substring(0, sepIdx);
+              aopConf.targetClass = targetClass;
               aopConf.putAfterMethod(targetMethod, method);
-              classAopConfMap.put(aopConfigClass.getCanonicalName(), aopConf);
+              classAopConfMap.put(targetClass, aopConf);
               continue;
             }
-            classAopConfMap.get(aopConfigClass.getCanonicalName()).putAfterMethod(targetMethod, method);
+            classAopConfMap.get(targetClass).putAfterMethod(targetMethod, method);
           }
         }
       }
